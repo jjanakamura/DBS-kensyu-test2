@@ -365,9 +365,17 @@ export default function AdminPage() {
                 {filteredOperators.length} 件表示（全 {operators.length} 社）
               </div>
             </div>
-            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800">
-              <p className="font-semibold mb-1">⚠️ 事業者追加・編集について</p>
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800 space-y-2">
+              <p className="font-semibold">⚠️ 事業者追加・編集について</p>
               <p>現在は <code className="bg-amber-100 px-1 rounded">data/operators.json</code> を直接編集してください。停止は <code className="bg-amber-100 px-1 rounded">"status": "inactive"</code> に変更します。</p>
+              <p className="font-semibold mt-2">🏢 新規事業者追加時の手順</p>
+              <ol className="list-decimal list-inside space-y-1 text-amber-700">
+                <li><code className="bg-amber-100 px-1 rounded">operators.json</code> に事業者を1行追加（operatorCode・adminPassword等）</li>
+                <li><code className="bg-amber-100 px-1 rounded">classrooms.json</code> に本部エントリを追加：<br />
+                  <code className="bg-amber-100 px-1 rounded text-xs block mt-1 p-1">{"{"}"classroomCode": "A006-HQ", "operatorCode": "A006", "classroomName": "本部", "isHQ": true, "status": "active", "createdAt": "YYYY-MM-DD"{"}"}</code>
+                </li>
+                <li>事業者に <code className="bg-amber-100 px-1 rounded">/operator/login</code> のURLとログイン情報を送付</li>
+              </ol>
             </div>
           </>
         )}

@@ -55,6 +55,10 @@ export default function OperatorDashboard() {
   if (!auth) return null;
 
   const passedCount = records.filter((r) => r.passed).length;
+  const hqClassroom = classrooms.find((c) => c.isHQ);
+  const hqUrl = hqClassroom
+    ? `${getBaseUrl()}/register?biz=${auth.operatorCode}&cls=${hqClassroom.classroomCode}`
+    : `${getBaseUrl()}/register?biz=${auth.operatorCode}`;
 
   return (
     <Layout title="事業者管理画面">
@@ -91,6 +95,16 @@ export default function OperatorDashboard() {
             <p className="text-xs text-gray-500 mb-1">総受講数</p>
             <p className="text-2xl font-bold text-gray-900">{records.length}</p>
           </div>
+        </div>
+
+        {/* 本部専用URLバナー */}
+        <div className="bg-green-50 border border-green-300 rounded-xl px-5 py-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-green-800 mb-0.5">🏢 本部スタッフ向け受講URL</p>
+            <p className="text-xs text-green-700">教室に所属しない本部・事務局スタッフはこちらのURLから受講できます。</p>
+            <p className="text-xs font-mono text-green-600 mt-1 break-all">{hqUrl}</p>
+          </div>
+          <HqCopyButton url={hqUrl} />
         </div>
 
         {/* タブ */}
@@ -139,8 +153,11 @@ export default function OperatorDashboard() {
                   </thead>
                   <tbody className="divide-y divide-green-50">
                     {classrooms.map((cls, idx) => (
-                      <tr key={idx} className="hover:bg-green-50 transition-colors">
-                        <td className="px-4 py-3 font-mono text-xs text-gray-700">{cls.classroomCode}</td>
+                      <tr key={idx} className={`hover:bg-green-50 transition-colors ${cls.isHQ ? 'bg-green-50' : ''}`}>
+                        <td className="px-4 py-3 font-mono text-xs text-gray-700">
+                          {cls.classroomCode}
+                          {cls.isHQ && <span className="ml-1 text-xs bg-green-700 text-white px-1.5 py-0.5 rounded-full">本部</span>}
+                        </td>
                         <td className="px-4 py-3 text-xs font-medium text-gray-900">{cls.classroomName}</td>
                         <td className="px-4 py-3 text-center text-xs text-gray-600">{cls.totalTrainees ?? 0}</td>
                         <td className="px-4 py-3 text-center text-xs font-semibold text-green-700">{cls.passedTrainees ?? 0}</td>
@@ -220,6 +237,20 @@ export default function OperatorDashboard() {
         )}
       </div>
     </Layout>
+  );
+}
+
+// 本部専用URLコピーボタン（大きめ）
+function HqCopyButton({ url }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      className={`flex-shrink-0 text-sm font-semibold px-4 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+        copied ? 'bg-green-700 text-white border-green-700' : 'bg-white text-green-700 border-green-500 hover:bg-green-100'
+      }`}>
+      {copied ? '✓ コピー済み' : '本部URLをコピー'}
+    </button>
   );
 }
 

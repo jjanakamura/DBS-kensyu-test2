@@ -9,6 +9,7 @@ import fs from 'fs';
  * レスポンス: { success: true, added: Classroom[], skipped: string[] }
  *
  * 教室コードは自動採番: {operatorCode}-C{01,02,...}
+ * ※ HQコード（{operatorCode}-HQ）は本部専用として自動管理。CSVからは追加不可。
  */
 export default function handler(req, res) {
   if (req.method !== 'POST') {
@@ -32,9 +33,9 @@ export default function handler(req, res) {
 
     const normalizedOpCode = operatorCode.trim().toUpperCase();
 
-    // 既存の教室コードの最大番号を取得
+    // 既存の C-番号の最大値を取得（HQは除く）
     const existing = classrooms.filter(
-      (c) => c.operatorCode.trim().toUpperCase() === normalizedOpCode
+      (c) => c.operatorCode.trim().toUpperCase() === normalizedOpCode && !c.isHQ
     );
     let maxNum = 0;
     existing.forEach((c) => {
@@ -49,6 +50,12 @@ export default function handler(req, res) {
     newClassrooms.forEach((item) => {
       const name = (item.classroomName || '').trim();
       if (!name) { skipped.push('（空欄）'); return; }
+
+      // 「本部」という名前はCSVから追加不可（HQで管理）
+      if (name === '本部' || name === '本社' || name === '事務局') {
+        skipped.push(`${name}（本部専用URLをご利用ください）`);
+        return;
+      }
 
       // 同一事業者に同名教室が既にある場合はスキップ
       const duplicate = classrooms.find(
