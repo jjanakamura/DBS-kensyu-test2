@@ -1,0 +1,72 @@
+[
+  {
+    "operatorCode": "A001",
+    "companyName": "株式会社中村",
+    "adminPassword": "nakamura2024",
+    "contactName": "中村 一郎",
+    "contactEmail": "ichiro@nakamura-juku.jp",
+    "status": "active",
+    "registeredAt": "2025-04-01",
+    "note": ""
+  },
+  {
+    "operatorCode": "A002",
+    "companyName": "株式会社〇〇教育",
+    "adminPassword": "xxkyoiku2024",
+    "contactName": "佐藤 花子",
+    "contactEmail": "hanako@xx-kyoiku.jp",
+    "status": "active",
+    "registeredAt": "2025-04-01",
+    "note": ""
+  },
+  {
+    "operatorCode": "A003",
+    "companyName": "有限会社山田学習塾",
+    "adminPassword": "yamada2024",
+    "contactName": "山田 次郎",
+    "contactEmail": "jiro@yamada-juku.jp",
+    "status": "active",
+    "registeredAt": "2025-04-01",
+    "note": ""
+  },
+  {
+    "operatorCode": "A004",
+    "companyName": "田中学習塾（個人事業）",
+    "adminPassword": "tanaka2024",
+    "contactName": "田中 三郎",
+    "contactEmail": "tanaka@tanaka-juku.jp",
+    "status": "active",
+    "registeredAt": "2025-05-10",
+    "note": ""
+  },
+  {
+    "operatorCode": "A005",
+    "companyName": "学校法人サンプル学園",
+    "adminPassword": "sample2024",
+    "contactName": "鈴木 四郎",
+    "contactEmail": "suzuki@sample-gakuen.jp",
+    "status": "active",
+    "registeredAt": "2025-06-01",
+    "note": ""
+  },
+  {
+    "operatorCode": "B001",
+    "companyName": "株式会社明光学院",
+    "adminPassword": "meiko2024",
+    "contactName": "高橋 五郎",
+    "contactEmail": "takahashi@meiko.jp",
+    "status": "active",
+    "registeredAt": "2025-09-01",
+    "note": ""
+  },
+  {
+    "operatorCode": "B002",
+    "companyName": "合同会社東京進学塾",
+    "adminPassword": "tokyo2024",
+    "contactName": "伊藤 六子",
+    "contactEmail": "ito@tokyo-shingaku.jp",
+    "status": "inactive",
+    "registeredAt": "2025-10-15",
+    "note": "退会済み（2026年3月）"
+  }
+]

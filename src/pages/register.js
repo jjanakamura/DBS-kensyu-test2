@@ -4,72 +4,79 @@ import Layout from '../components/Layout';
 
 /**
  * 基本情報入力画面
- * - 会員コード → API照合 → 事業者名を自動表示（入力不要）
- * - 教室名 / 氏名 / メールアドレスを入力
- * - ?code=A001 のようなURLパラメータで会員コードを自動入力・自動照合
+ * - ?biz=A001 → 事業者コード自動入力・自動照合
+ * - ?cls=A001-C01 → 教室名を自動取得・読み取り専用化
+ * - 両方なしの場合は手動入力
  */
 export default function Register() {
   const router = useRouter();
-  const [form, setForm] = useState({ memberCode: '', classroomName: '', fullName: '', email: '' });
+  const [form, setForm] = useState({ operatorCode: '', classroomName: '', fullName: '', email: '' });
   const [companyName, setCompanyName] = useState('');
+  const [classroomCode, setClassroomCode] = useState('');
   const [codeStatus, setCodeStatus] = useState('idle'); // idle | checking | ok | error | inactive
+  const [classroomLocked, setClassroomLocked] = useState(false);
   const [errors, setErrors] = useState({});
-  const [urlCodeApplied, setUrlCodeApplied] = useState(false);
+  const [urlParamsApplied, setUrlParamsApplied] = useState(false);
 
-  // URLパラメータ ?code=A001 の自動入力・自動照合
+  // URLパラメータ ?biz=A001&cls=A001-C01 の自動処理
   useEffect(() => {
-    if (!router.isReady) return;
-    const codeParam = router.query.code;
-    if (codeParam && !urlCodeApplied) {
-      const code = String(codeParam).trim().toUpperCase();
-      setForm((prev) => ({ ...prev, memberCode: code }));
-      setUrlCodeApplied(true);
-      // 自動照合
-      lookupCode(code);
-    }
-  }, [router.isReady, router.query.code]);
+    if (!router.isReady || urlParamsApplied) return;
+    const biz = router.query.biz ? String(router.query.biz).trim().toUpperCase() : '';
+    const cls = router.query.cls ? String(router.query.cls).trim().toUpperCase() : '';
+    if (!biz) return;
 
-  const lookupCode = async (code) => {
+    setUrlParamsApplied(true);
+    setForm((prev) => ({ ...prev, operatorCode: biz }));
+    if (cls) setClassroomCode(cls);
+    lookupOperator(biz, cls || null);
+  }, [router.isReady, router.query]);
+
+  const lookupOperator = async (code, clsCode) => {
     if (!code) return;
     setCodeStatus('checking');
     setCompanyName('');
     try {
-      const res = await fetch('/api/lookup-member', {
+      const res = await fetch('/api/lookup-operator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ operatorCode: code, classroomCode: clsCode }),
       });
       const data = await res.json();
+
       if (data.found) {
-        setCompanyName(data.name);
+        setCompanyName(data.companyName);
         setCodeStatus('ok');
-        setErrors((prev) => ({ ...prev, memberCode: null }));
+        setErrors((prev) => ({ ...prev, operatorCode: null }));
+        if (data.classroomName) {
+          setForm((prev) => ({ ...prev, classroomName: data.classroomName }));
+          setClassroomLocked(true);
+        }
       } else if (data.inactive) {
         setCodeStatus('inactive');
         setErrors((prev) => ({
           ...prev,
-          memberCode: 'このコードは現在ご利用できません。事務局にお問い合わせください。',
+          operatorCode: 'このコードは現在ご利用できません。事務局にお問い合わせください。',
         }));
       } else {
         setCodeStatus('error');
         setErrors((prev) => ({
           ...prev,
-          memberCode: '会員コードが見つかりません。正確に入力されているかご確認ください。',
+          operatorCode: '事業者コードが見つかりません。正確に入力されているかご確認ください。',
         }));
       }
     } catch {
       setCodeStatus('error');
-      setErrors((prev) => ({ ...prev, memberCode: 'コードの照合中にエラーが発生しました。' }));
+      setErrors((prev) => ({ ...prev, operatorCode: 'コードの照合中にエラーが発生しました。' }));
     }
   };
 
-  const handleCodeLookup = () => lookupCode(form.memberCode.trim());
+  const handleCodeLookup = () => lookupOperator(form.operatorCode.trim(), classroomCode || null);
 
   const validate = () => {
     const errs = {};
-    if (!form.memberCode.trim()) errs.memberCode = '会員コードを入力してください。';
-    else if (codeStatus === 'inactive') errs.memberCode = 'このコードは現在ご利用できません。事務局にお問い合わせください。';
-    else if (codeStatus !== 'ok') errs.memberCode = '有効な会員コードを入力・照合してください。';
+    if (!form.operatorCode.trim()) errs.operatorCode = '事業者コードを入力してください。';
+    else if (codeStatus === 'inactive') errs.operatorCode = 'このコードは現在ご利用できません。';
+    else if (codeStatus !== 'ok') errs.operatorCode = '有効な事業者コードを入力・照合してください。';
     if (!form.classroomName.trim()) errs.classroomName = '教室名を入力してください。';
     if (!form.fullName.trim()) errs.fullName = '氏名を入力してください。';
     if (!form.email.trim()) errs.email = 'メールアドレスを入力してください。';
@@ -82,7 +89,8 @@ export default function Register() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     sessionStorage.setItem('trainee', JSON.stringify({
-      memberCode: form.memberCode.trim(),
+      operatorCode: form.operatorCode.trim(),
+      classroomCode: classroomCode || '',
       companyName,
       classroomName: form.classroomName.trim(),
       fullName: form.fullName.trim(),
@@ -96,13 +104,12 @@ export default function Register() {
       errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'
     }`;
 
-  // URLパラメータからコードが来ている場合の案内
-  const hasUrlCode = !!router.query.code;
+  const hasUrlBiz = !!router.query.biz;
+  const hasUrlCls = !!router.query.cls;
 
   return (
     <Layout title="基本情報入力">
       <div className="max-w-xl mx-auto">
-        {/* ステッパー */}
         <div className="flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-5">
           <span className="font-bold text-green-800">① 基本情報入力</span>
           <span className="mx-1">›</span><span>② 研修動画</span>
@@ -114,41 +121,42 @@ export default function Register() {
         <p className="text-sm text-gray-500 mb-6">以下の項目をすべて正確に入力してください。<span className="text-red-500">*</span> は必須です。</p>
 
         {/* 専用URLアクセス時の案内 */}
-        {hasUrlCode && codeStatus === 'ok' && (
+        {hasUrlBiz && codeStatus === 'ok' && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-5 text-xs text-blue-800">
             <p className="font-semibold mb-0.5">📎 専用URLからアクセスしました</p>
-            <p>会員コードが自動で入力されています。教室名・氏名・メールアドレスをご入力ください。</p>
+            <p>{hasUrlCls ? '事業者コード・教室名が自動で入力されています。氏名・メールアドレスをご入力ください。' : '事業者コードが自動で入力されています。教室名・氏名・メールアドレスをご入力ください。'}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-green-200 p-6 space-y-5" noValidate>
 
-          {/* 会員コード */}
+          {/* 事業者コード */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              会員コード <span className="text-red-500">*</span>
+              事業者コード <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
-                value={form.memberCode}
+                value={form.operatorCode}
                 onChange={(e) => {
-                  setForm({ ...form, memberCode: e.target.value });
+                  setForm({ ...form, operatorCode: e.target.value });
                   setCodeStatus('idle');
                   setCompanyName('');
+                  setClassroomLocked(false);
                 }}
                 onBlur={handleCodeLookup}
                 placeholder="例：A001"
                 maxLength={20}
-                readOnly={hasUrlCode && codeStatus === 'ok'}
+                readOnly={hasUrlBiz && codeStatus === 'ok'}
                 className={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors ${
-                  errors.memberCode ? 'border-red-400 bg-red-50'
+                  errors.operatorCode ? 'border-red-400 bg-red-50'
                   : codeStatus === 'ok' ? 'border-green-400 bg-green-50'
                   : codeStatus === 'inactive' ? 'border-red-400 bg-red-50'
                   : 'border-gray-300 bg-white'
-                } ${hasUrlCode && codeStatus === 'ok' ? 'cursor-not-allowed opacity-75' : ''}`}
+                } ${hasUrlBiz && codeStatus === 'ok' ? 'cursor-not-allowed opacity-75' : ''}`}
               />
-              {!(hasUrlCode && codeStatus === 'ok') && (
+              {!(hasUrlBiz && codeStatus === 'ok') && (
                 <button type="button" onClick={handleCodeLookup}
                   disabled={codeStatus === 'checking'}
                   className="px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300 rounded-lg transition-colors whitespace-nowrap">
@@ -156,15 +164,14 @@ export default function Register() {
                 </button>
               )}
             </div>
-            {codeStatus === 'checking' && <p className="mt-1 text-xs text-gray-500">照合中...</p>}
-            {codeStatus === 'ok' && <p className="mt-1 text-xs text-green-700 font-medium">✓ 会員コードを確認しました</p>}
-            {errors.memberCode && <p className="mt-1 text-xs text-red-600">{errors.memberCode}</p>}
+            {codeStatus === 'ok' && <p className="mt-1 text-xs text-green-700 font-medium">✓ 事業者コードを確認しました</p>}
+            {errors.operatorCode && <p className="mt-1 text-xs text-red-600">{errors.operatorCode}</p>}
           </div>
 
           {/* 事業者名（自動取得） */}
           {companyName && (
             <div className="bg-green-50 border border-green-300 rounded-lg p-3">
-              <p className="text-xs text-green-700 font-semibold mb-0.5">事業者名（会員コードから自動取得）</p>
+              <p className="text-xs text-green-700 font-semibold mb-0.5">事業者名（事業者コードから自動取得）</p>
               <p className="text-sm font-bold text-green-900">{companyName}</p>
               <p className="text-xs text-green-600 mt-1">※ 事業者名は入力不要です。自動で記録されます。</p>
             </div>
@@ -172,10 +179,18 @@ export default function Register() {
 
           {/* 教室名 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">教室名 <span className="text-red-500">*</span></label>
-            <input type="text" value={form.classroomName}
-              onChange={(e) => setForm({ ...form, classroomName: e.target.value })}
-              placeholder="例：渋谷校" className={inputClass('classroomName')} />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              教室名 <span className="text-red-500">*</span>
+              {classroomLocked && <span className="ml-2 text-xs text-blue-600 font-normal">（自動入力）</span>}
+            </label>
+            <input
+              type="text"
+              value={form.classroomName}
+              onChange={(e) => !classroomLocked && setForm({ ...form, classroomName: e.target.value })}
+              readOnly={classroomLocked}
+              placeholder="例：渋谷校"
+              className={`${inputClass('classroomName')} ${classroomLocked ? 'cursor-not-allowed opacity-75 bg-green-50 border-green-300' : ''}`}
+            />
             {errors.classroomName && <p className="mt-1 text-xs text-red-600">{errors.classroomName}</p>}
           </div>
 

@@ -1,0 +1,51 @@
+[
+  {
+    "classroomCode": "A001-C01",
+    "operatorCode": "A001",
+    "classroomName": "渋谷校",
+    "status": "active",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "classroomCode": "A001-C02",
+    "operatorCode": "A001",
+    "classroomName": "新宿校",
+    "status": "active",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "classroomCode": "A001-C03",
+    "operatorCode": "A001",
+    "classroomName": "池袋校",
+    "status": "active",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "classroomCode": "A002-C01",
+    "operatorCode": "A002",
+    "classroomName": "本部",
+    "status": "active",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "classroomCode": "A003-C01",
+    "operatorCode": "A003",
+    "classroomName": "本校",
+    "status": "active",
+    "createdAt": "2025-04-01"
+  },
+  {
+    "classroomCode": "B001-C01",
+    "operatorCode": "B001",
+    "classroomName": "東京本部",
+    "status": "active",
+    "createdAt": "2025-09-01"
+  },
+  {
+    "classroomCode": "B001-C02",
+    "operatorCode": "B001",
+    "classroomName": "横浜校",
+    "status": "active",
+    "createdAt": "2025-09-01"
+  }
+]
